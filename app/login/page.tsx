@@ -1,14 +1,18 @@
 import { SignInButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { LogInIcon } from "lucide-react";
-import { redirect } from "next/dist/server/api-utils";
+import { redirect } from "next/navigation";
 import Image from "next/image";
 
+// Tornando o componente explicitamente assíncrono
 const LoginPage = async () => {
-  const { userId } = await auth();
-  if (userId) {
-    redirect("/");
+  const session = await auth();
+
+  // Se o usuário estiver logado, redireciona
+  if (session?.userId) {
+    return redirect("/");
   }
+
   return (
     <div className="grid h-full grid-cols-2">
       {/* Lado esquerdo da tela de login */}
@@ -31,7 +35,7 @@ const LoginPage = async () => {
         </p>
         <SignInButton>
           <div className="flex items-center">
-            <button className="flex items-center space-x-2 rounded-md px-4 py-2 hover:bg-gray-100">
+            <button className="border-white-600 hover:border-white-900 flex items-center space-x-2 rounded-md border-2 px-4 py-2">
               <LogInIcon />
               <span>Faça login ou crie uma conta</span>
             </button>
