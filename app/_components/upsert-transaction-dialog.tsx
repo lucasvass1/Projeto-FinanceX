@@ -1,3 +1,5 @@
+"use client";
+
 import { z } from "zod";
 import { Button } from "./ui/button";
 import {
@@ -6,9 +8,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "./ui/dialog";
-import { ArrowDownUpIcon } from "lucide-react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -34,26 +35,29 @@ import {
   SelectValue,
 } from "./ui/select";
 import { DatePicker } from "./ui/date-picker";
+import { upsertTransaction } from "../actions/add-transaction";
 
 // Props
 interface UpsertTransactionDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  defaultValues?: TransactionFormValues;
+  transactionId?: string;
 }
 
 // Schema de validação
 const transactionSchema = z.object({
-  name: z.string().min(1, "O nome é obrigatório"),
-  amount: z.number().positive("O valor deve ser maior que 0"),
-  type: z.nativeEnum(TransactionType),
-  category: z.nativeEnum(TransactionCategory),
-  paymentMethod: z.nativeEnum(TransactionPaymentMethod),
-  date: z.date(),
+  name: z.string().trim().min(1, { message: "O nome é obrigatório" }),
+  amount: z.number().positive({ message: "O valor deve ser positivo" }),
+  type: z.nativeEnum(TransactionType, { required_error: "O tipo é obrigatório." }),
+  category: z.nativeEnum(TransactionCategory, { required_error: "A categoria é obrigatória." }),
+  paymentMethod: z.nativeEnum(TransactionPaymentMethod, { required_error: "O método de pagamento é obrigatório" }),
+  date: z.date({ required_error: "A data é obrigatória." }),
 });
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
 
-// Mock de opções (ajuste conforme seu projeto)
+// Mock de opções
 const TRANSACTION_CATEGORY_OPTIONS = [
   { value: TransactionCategory.FOOD, label: "Alimentação" },
   { value: TransactionCategory.TRANSPORT, label: "Transporte" },
@@ -64,10 +68,15 @@ const PAYMENT_METHOD_OPTIONS = [
   { value: TransactionPaymentMethod.CREDIT_CARD, label: "Cartão de Crédito" },
 ];
 
-const UpsertTransactionDialog = ({ isOpen, setIsOpen }: UpsertTransactionDialogProps) => {
+const UpsertTransactionDialog = ({
+  isOpen,
+  setIsOpen,
+  defaultValues,
+  transactionId,
+}: UpsertTransactionDialogProps) => {
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: {
+    defaultValues: defaultValues ?? {
       name: "",
       amount: 0,
       type: TransactionType.EXPENSE,
@@ -77,32 +86,29 @@ const UpsertTransactionDialog = ({ isOpen, setIsOpen }: UpsertTransactionDialogP
     },
   });
 
-  const onSubmit = (data: TransactionFormValues) => {
-    console.log("Transação adicionada:", data);
-    setIsOpen(false);
-    form.reset();
+  const onSubmit = async (data: TransactionFormValues) => {
+    try {
+      await upsertTransaction({ ...data, id: transactionId });
+      setIsOpen(false);
+      form.reset();
+    } catch (error) {
+      console.error("Erro ao adicionar transação:", error);
+    }
   };
+
+  const isUpdate = Boolean(transactionId);
 
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
-        if (!open) {
-          form.reset();
-        }
+        if (!open) form.reset();
       }}
     >
-      <DialogTrigger asChild>
-        <Button className="rounded-full font-bold">
-          Adicionar transação
-          <ArrowDownUpIcon className="ml-2 h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-
       <DialogContent className="w-full max-w-xs p-3">
         <DialogHeader>
-          <DialogTitle>Adicionar Transação</DialogTitle>
+          <DialogTitle>{isUpdate ? "Atualizar" : "Criar"} Transação</DialogTitle>
           <DialogDescription>Insira as informações abaixo</DialogDescription>
         </DialogHeader>
 
@@ -134,7 +140,7 @@ const UpsertTransactionDialog = ({ isOpen, setIsOpen }: UpsertTransactionDialogP
                     <MoneyInput
                       placeholder="Digite o valor..."
                       value={field.value}
-                      onValueChange={({ floatValue }) => field.onChange(floatValue)}
+                      onValueChange={({ floatValue }) => field.onChange(floatValue ?? 0)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -233,14 +239,10 @@ const UpsertTransactionDialog = ({ isOpen, setIsOpen }: UpsertTransactionDialogP
 
             {/* Botões */}
             <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit">Adicionar</Button>
+              <Button type="submit">{isUpdate ? "Atualizar" : "Adicionar"}</Button>
             </div>
           </form>
         </Form>
