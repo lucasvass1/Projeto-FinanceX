@@ -1,4 +1,4 @@
-"use server";
+'use server';
 
 import { db } from "@/app/_lib/prisma";
 import { auth } from "@clerk/nextjs/server";
@@ -29,9 +29,7 @@ export const upsertTransaction = async (params: AddTransactionParams) => {
   }
 
   await db.transaction.upsert({
-    where: {
-      id: params.id ?? "", // caso id seja undefined, deve ser string vazia ou tratar de outra forma
-    },
+    where: { id: params.id ?? "" },
     update: {
       ...params,
       userId,
