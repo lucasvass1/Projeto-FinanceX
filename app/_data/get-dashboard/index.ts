@@ -77,7 +77,14 @@ export const getDashboard = async (month?: string) => {
         : 0,
   }));
 
-  // --- 5️⃣ Retorno consolidado ---
+  // --- 5️⃣ Últimas transações ---
+  const lastTransactions = await db.transaction.findMany({
+    where: baseFilter,
+    orderBy: { date: "desc" },
+    take: 10,
+  });
+
+  // --- 6️⃣ Retorno consolidado ---
   return {
     balance,
     depositsTotal,
@@ -86,5 +93,6 @@ export const getDashboard = async (month?: string) => {
     transactionsTotal,
     typePercentage,
     totalExpensesPerCategory,
+    lastTransactions,
   };
 };

@@ -4,18 +4,18 @@ import {
   TransactionCategory,
 } from "@prisma/client";
 
-export const TRANSACTION_CATEGORY_LABELS = {
-  EDUCATION: "Educação",
-  ENTERTAINMENT: "Entretenimento",
-  FOOD: "Alimentação",
-  HEALTH: "Saúde",
-  HOUSING: "Moradia",
-  OTHER: "Outros",
-  SALARY: "Salário",
-  TRANSPORTATION: "Transporte",
-  UTILITY: "Utilidades",
+// --- Ícones dos métodos de pagamento ---
+export const TRANSACTION_PAYMENT_METHOD_ICONS = {
+  [TransactionPaymentMethod.CREDIT_CARD]: "credit-card.svg",
+  [TransactionPaymentMethod.DEBIT_CARD]: "debit-card.svg",
+  [TransactionPaymentMethod.PIX]: "pix.svg",
+  [TransactionPaymentMethod.CASH]: "money.svg",
+  [TransactionPaymentMethod.BANK_TRANSFER]: "bank-transfer.svg",
+  [TransactionPaymentMethod.BANK_SLIP]: "bank-slip.svg",
+  [TransactionPaymentMethod.OTHER]: "other.svg",
 };
 
+// --- Labels dos métodos de pagamento ---
 export const TRANSACTION_PAYMENT_METHOD_LABELS = {
   BANK_TRANSFER: "Transferência Bancária",
   BANK_SLIP: "Boleto Bancário",
@@ -26,10 +26,24 @@ export const TRANSACTION_PAYMENT_METHOD_LABELS = {
   PIX: "Pix",
 };
 
+// --- Labels das categorias ---
+export const TRANSACTION_CATEGORY_LABELS = {
+  EDUCATION: "Educação",
+  ENTERTAINMENT: "Entretenimento",
+  FOOD: "Alimentação",
+  HEALTH: "Saúde",
+  HOUSING: "Moradia",
+  OTHER: "Outros",
+  SALARY: "Salário",
+  TRANSPORTATION: "Transporte",
+  UTILITY: "Contas e utilidades",
+};
+
+// --- Tipos de transação ---
 export const TRANSACTION_TYPE_OPTIONS = [
   {
     value: TransactionType.INCOME,
-    label: "Despesa",
+    label: "Receita",
   },
   {
     value: TransactionType.DEPOSIT,
@@ -41,6 +55,7 @@ export const TRANSACTION_TYPE_OPTIONS = [
   },
 ];
 
+// --- Opções de método de pagamento ---
 export const TRANSACTION_PAYMENT_METHOD_OPTIONS = [
   {
     value: TransactionPaymentMethod.BANK_TRANSFER,
@@ -75,6 +90,8 @@ export const TRANSACTION_PAYMENT_METHOD_OPTIONS = [
     label: TRANSACTION_PAYMENT_METHOD_LABELS[TransactionPaymentMethod.PIX],
   },
 ];
+
+// --- Opções de categoria ---
 export const TRANSACTION_CATEGORY_OPTIONS = [
   {
     value: TransactionCategory.EDUCATION,

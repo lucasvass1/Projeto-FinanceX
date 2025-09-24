@@ -7,6 +7,7 @@ import TransactionsPieChart from "./_components/transactions-pie-chart";
 import { getDashboard } from "../_data/get-dashboard";
 import ExpensesPerCategory from "./_components/expenses-per-category";
 import TimeSelect from "./_components/time-select";
+import LastTransactions from "./_components/last-transactions";
 
 interface HomeProps { 
   searchParams: { month?: string };
@@ -48,10 +49,12 @@ const Home = async ({ searchParams: { month } }: HomeProps) => {
 
             {/* Gráfico de transações */}
             <div className="grid grid-cols-3 grid-rows-1 gap-6 ">
+
             <TransactionsPieChart typesPercentage={dashboard.typePercentage} {...dashboard} />
             <ExpensesPerCategory expensesPerCategory={dashboard.totalExpensesPerCategory} />
           </div>
         </div>
+        <LastTransactions lastTransactions={dashboard.lastTransactions} />
         </div>
       </div>
     </>
