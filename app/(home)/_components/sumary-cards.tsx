@@ -2,47 +2,20 @@ import { PiggyBankIcon, TrendingUpIcon, WalletIcon, ArrowDownIcon } from "lucide
 import SummaryCard from "../_components/sumarry-card";
 import { db } from "@/app/_lib/prisma";
 import { TransactionType } from "@prisma/client";
+import { getDashboard } from "@/app/_data/get-dashboard";
 
 interface SummaryCardsProps {
   month?: string; 
+  balance: number;
+  depositsTotal: number;
+  investmentsTotal: number;
+  expensesTotal: number;
 }
 
 const SummaryCards = async ({ month }: SummaryCardsProps) => {
- 
-  let m = Number(month ?? new Date().getMonth() + 1); 
-  if (isNaN(m) || m < 1 || m > 12) {
-    m = new Date().getMonth() + 1;
-  }
+  const dashboard = await getDashboard(month);
+  const { balance, depositsTotal, investmentsTotal, expensesTotal } = dashboard;
 
-  const year = new Date().getFullYear(); 
-  const startDate = new Date(year, m - 1, 1); 
-  const endDate = new Date(year, m, 1);       
-
-  const baseFilter = { date: { gte: startDate, lt: endDate } };
-
- 
-  const depositsTotal = Number(
-    (await db.transaction.aggregate({
-      where: { ...baseFilter, type: TransactionType.DEPOSIT },
-      _sum: { amount: true },
-    }))._sum.amount ?? 0
-  );
-
-  const investmentsTotal = Number(
-    (await db.transaction.aggregate({
-      where: { ...baseFilter, type: TransactionType.INVESTMENT },
-      _sum: { amount: true },
-    }))._sum.amount ?? 0
-  );
-
-  const expensesTotal = Number(
-    (await db.transaction.aggregate({
-      where: { ...baseFilter, type: TransactionType.EXPENSE },
-      _sum: { amount: true },
-    }))._sum.amount ?? 0
-  );
-
-  const balance = depositsTotal - investmentsTotal - expensesTotal;
 
  
   return (
