@@ -1,8 +1,9 @@
 import { db } from "@/app/_lib/prisma";
 import { TransactionType } from "@prisma/client";
-import { TransactionPercentagePerType } from "./type";
+import { TotalExpensePerCategory, TransactionPercentagePerType } from "./type";
 
 export const getDashboard = async (month?: string) => {
+  // --- 1️⃣ Determinar mês válido ---
   let m = Number(month ?? new Date().getMonth() + 1);
   if (isNaN(m) || m < 1 || m > 12) {
     m = new Date().getMonth() + 1;
@@ -14,6 +15,7 @@ export const getDashboard = async (month?: string) => {
 
   const baseFilter = { date: { gte: startDate, lt: endDate } };
 
+  // --- 2️⃣ Consultas agregadas ---
   const depositsTotal = Number(
     (await db.transaction.aggregate({
       where: { ...baseFilter, type: TransactionType.DEPOSIT },
@@ -37,13 +39,14 @@ export const getDashboard = async (month?: string) => {
 
   const transactionsTotal = Number(
     (await db.transaction.aggregate({
-      where: { ...baseFilter },
+      where: baseFilter,
       _sum: { amount: true },
     }))._sum.amount ?? 0
   );
 
   const balance = depositsTotal - investmentsTotal - expensesTotal;
 
+  // --- 3️⃣ Porcentagem por tipo de transação ---
   const typePercentage: TransactionPercentagePerType = {
     [TransactionType.DEPOSIT]: transactionsTotal > 0
       ? Math.round((depositsTotal / transactionsTotal) * 100)
@@ -56,6 +59,25 @@ export const getDashboard = async (month?: string) => {
       : 0,
   };
 
+  // --- 4️⃣ Total de despesas por categoria ---
+  const totalExpensesPerCategory: TotalExpensePerCategory[] = (
+    await db.transaction.groupBy({
+      by: ["category"],
+      where: { 
+        ...baseFilter,
+        type: TransactionType.EXPENSE
+      },
+      _sum: { amount: true },
+    })
+  ).map(category => ({
+      category: category.category,
+      total: Number(category._sum.amount ?? 0),
+      percentageOfTotal: expensesTotal > 0
+        ? Math.round((Number(category._sum.amount ?? 0) / expensesTotal) * 100)
+        : 0,
+  }));
+
+  // --- 5️⃣ Retorno consolidado ---
   return {
     balance,
     depositsTotal,
@@ -63,5 +85,6 @@ export const getDashboard = async (month?: string) => {
     expensesTotal,
     transactionsTotal,
     typePercentage,
+    totalExpensesPerCategory,
   };
 };
