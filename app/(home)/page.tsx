@@ -25,7 +25,7 @@ const Home = async ({ searchParams: { month } }: HomeProps) => {
   // Valida o mês
   const monthIsInvalid = !month || !isMatch(month, "MM");
   if (monthIsInvalid) {
-    redirect(`/?month=01`); // caminho absoluto
+    redirect(`?month=${new Date().getMonth() + 1}`); 
   }
 
   // Busca dados do dashboard

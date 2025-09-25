@@ -1,8 +1,14 @@
 import { db } from "@/app/_lib/prisma";
 import { TransactionType } from "@prisma/client";
 import { TotalExpensePerCategory, TransactionPercentagePerType } from "./type";
+import { auth } from "@clerk/nextjs/server";
 
 export const getDashboard = async (month?: string) => {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("Usuário não autenticado");
+  }
+
   // --- 1️⃣ Determinar mês válido ---
   let m = Number(month ?? new Date().getMonth() + 1);
   if (isNaN(m) || m < 1 || m > 12) {
@@ -13,7 +19,11 @@ export const getDashboard = async (month?: string) => {
   const startDate = new Date(year, m - 1, 1);
   const endDate = new Date(year, m, 1);
 
-  const baseFilter = { date: { gte: startDate, lt: endDate } };
+  // Filtro base agora inclui o usuário
+  const baseFilter = { 
+    userId,                         // ✅ filtro por usuário
+    date: { gte: startDate, lt: endDate }
+  };
 
   // --- 2️⃣ Consultas agregadas ---
   const depositsTotal = Number(
@@ -48,15 +58,18 @@ export const getDashboard = async (month?: string) => {
 
   // --- 3️⃣ Porcentagem por tipo de transação ---
   const typePercentage: TransactionPercentagePerType = {
-    [TransactionType.DEPOSIT]: transactionsTotal > 0
-      ? Math.round((depositsTotal / transactionsTotal) * 100)
-      : 0,
-    [TransactionType.INVESTMENT]: transactionsTotal > 0
-      ? Math.round((investmentsTotal / transactionsTotal) * 100)
-      : 0,
-    [TransactionType.EXPENSE]: transactionsTotal > 0
-      ? Math.round((expensesTotal / transactionsTotal) * 100)
-      : 0,
+    [TransactionType.DEPOSIT]:
+      transactionsTotal > 0
+        ? Math.round((depositsTotal / transactionsTotal) * 100)
+        : 0,
+    [TransactionType.INVESTMENT]:
+      transactionsTotal > 0
+        ? Math.round((investmentsTotal / transactionsTotal) * 100)
+        : 0,
+    [TransactionType.EXPENSE]:
+      transactionsTotal > 0
+        ? Math.round((expensesTotal / transactionsTotal) * 100)
+        : 0,
   };
 
   // --- 4️⃣ Total de despesas por categoria ---
@@ -65,15 +78,18 @@ export const getDashboard = async (month?: string) => {
       by: ["category"],
       where: { 
         ...baseFilter,
-        type: TransactionType.EXPENSE
+        type: TransactionType.EXPENSE,
       },
       _sum: { amount: true },
     })
-  ).map(category => ({
-      category: category.category,
-      total: Number(category._sum.amount ?? 0),
-      percentageOfTotal: expensesTotal > 0
-        ? Math.round((Number(category._sum.amount ?? 0) / expensesTotal) * 100)
+  ).map((category) => ({
+    category: category.category,
+    total: Number(category._sum.amount ?? 0),
+    percentageOfTotal:
+      expensesTotal > 0
+        ? Math.round(
+            (Number(category._sum.amount ?? 0) / expensesTotal) * 100
+          )
         : 0,
   }));
 
