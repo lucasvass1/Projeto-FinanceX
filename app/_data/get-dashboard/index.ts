@@ -81,7 +81,7 @@ export const getDashboard = async (month?: string) => {
   const lastTransactions = await db.transaction.findMany({
     where: baseFilter,
     orderBy: { date: "desc" },
-    take: 10,
+    take: 15,
   });
 
   // --- 6️⃣ Retorno consolidado ---
