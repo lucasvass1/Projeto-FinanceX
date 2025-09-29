@@ -8,8 +8,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "./ui/dialog";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -37,7 +37,6 @@ import {
 import { DatePicker } from "./ui/date-picker";
 import { upsertTransaction } from "../actions/add-transaction";
 
-// Props
 interface UpsertTransactionDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -45,28 +44,47 @@ interface UpsertTransactionDialogProps {
   transactionId?: string;
 }
 
-// Schema de validação
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
 const transactionSchema = z.object({
   name: z.string().trim().min(1, { message: "O nome é obrigatório" }),
   amount: z.number().positive({ message: "O valor deve ser positivo" }),
-  type: z.nativeEnum(TransactionType, { required_error: "O tipo é obrigatório." }),
-  category: z.nativeEnum(TransactionCategory, { required_error: "A categoria é obrigatória." }),
-  paymentMethod: z.nativeEnum(TransactionPaymentMethod, { required_error: "O método de pagamento é obrigatório" }),
+  type: z.nativeEnum(TransactionType),
+  category: z.nativeEnum(TransactionCategory),
+  paymentMethod: z.nativeEnum(TransactionPaymentMethod),
   date: z.date({ required_error: "A data é obrigatória." }),
 });
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
 
-// Mock de opções
-const TRANSACTION_CATEGORY_OPTIONS = [
-  { value: TransactionCategory.FOOD, label: "Alimentação" },
-  { value: TransactionCategory.TRANSPORT, label: "Transporte" },
-];
+const TRANSACTION_CATEGORY_OPTIONS = Object.values(TransactionCategory).map((cat) => {
+  const labels: Record<TransactionCategory, string> = {
+    HOUSING: "Moradia",
+    TRANSPORTATION: "Transporte",
+    FOOD: "Alimentação",
+    ENTERTAINMENT: "Lazer",
+    HEALTH: "Saúde",
+    UTILITY: "Conta/Serviços",
+    SALARY: "Salário",
+    EDUCATION: "Educação",
+    OTHER: "Outro",
+  };
+  return { value: cat, label: labels[cat] ?? cat };
+});
 
-const PAYMENT_METHOD_OPTIONS = [
-  { value: TransactionPaymentMethod.CASH, label: "Dinheiro" },
-  { value: TransactionPaymentMethod.CREDIT_CARD, label: "Cartão de Crédito" },
-];
+const PAYMENT_METHOD_OPTIONS = Object.values(TransactionPaymentMethod).map((method) => {
+  const labels: Record<TransactionPaymentMethod, string> = {
+    CASH: "Dinheiro",
+    CREDIT_CARD: "Cartão de Crédito",
+    DEBIT_CARD: "Cartão de Débito",
+    BANK_TRANSFER: "Transferência Bancária",
+    BANK_SLIP: "Boleto",
+    PIX: "PIX",
+    OTHER: "Outro",
+  };
+  return { value: method, label: labels[method] ?? method };
+});
 
 const UpsertTransactionDialog = ({
   isOpen,
@@ -82,7 +100,7 @@ const UpsertTransactionDialog = ({
       type: TransactionType.EXPENSE,
       category: TRANSACTION_CATEGORY_OPTIONS[0].value,
       paymentMethod: PAYMENT_METHOD_OPTIONS[0].value,
-      date: new Date(),
+      date: today,
     },
   });
 
@@ -114,7 +132,6 @@ const UpsertTransactionDialog = ({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-            {/* Nome */}
             <FormField
               control={form.control}
               name="name"
@@ -129,7 +146,6 @@ const UpsertTransactionDialog = ({
               )}
             />
 
-            {/* Valor */}
             <FormField
               control={form.control}
               name="amount"
@@ -148,7 +164,6 @@ const UpsertTransactionDialog = ({
               )}
             />
 
-            {/* Tipo */}
             <FormField
               control={form.control}
               name="type"
@@ -172,7 +187,6 @@ const UpsertTransactionDialog = ({
               )}
             />
 
-            {/* Categoria */}
             <FormField
               control={form.control}
               name="category"
@@ -198,7 +212,6 @@ const UpsertTransactionDialog = ({
               )}
             />
 
-            {/* Método de pagamento */}
             <FormField
               control={form.control}
               name="paymentMethod"
@@ -224,7 +237,6 @@ const UpsertTransactionDialog = ({
               )}
             />
 
-            {/* Data */}
             <FormField
               control={form.control}
               name="date"
@@ -237,7 +249,6 @@ const UpsertTransactionDialog = ({
               )}
             />
 
-            {/* Botões */}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                 Cancelar
